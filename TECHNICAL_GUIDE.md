@@ -27,7 +27,8 @@ source-specific field mapping. `repository.py` owns persistence only.
 3. The runner loads enabled and unfinished categories into memory.
 4. The provider requests `/<category>/malta/`; later pages use
    `/<category>/malta/pageno=<page>`.
-5. Only links matching `/<business>/<category>/` are treated as businesses.
+5. Business links match `/<business>/<category>/` or Yellow's legacy
+   `/<business>_<category>+<locality>/` format.
 6. Listing URLs are batch-checked before detail requests.
 7. Only new or incomplete businesses have detail pages requested.
 8. JSON-LD is preferred; HTML title/meta and links provide fallbacks.

@@ -31,7 +31,11 @@ def run() -> None:
                     logger.info("Searching businesses: category=%s page=%d",
                                 category["name"], page)
                     links = provider.page_links(category["search_query"], page)
+                    logger.info("Found business links: category=%s page=%d count=%d",
+                                category["name"], page, len(links))
                     if not links:
+                        logger.info("No businesses found; completing category: %s",
+                                    category["name"])
                         complete_category(connection, category["id"])
                         connection.commit()
                         break

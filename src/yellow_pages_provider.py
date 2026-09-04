@@ -2,7 +2,7 @@ import hashlib
 import json
 import re
 import time
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,7 +11,6 @@ class YellowPagesProvider:
         self.base = settings.yellow_url
         self.timeout = settings.http_timeout
         self.delay = settings.request_delay
-        self.max_pages = settings.max_pages
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "malta-business-directory/1.0"})
     def get(self, url, params=None):
@@ -51,7 +50,11 @@ class YellowPagesProvider:
             path = urlparse(url).path.strip("/")
             parts = path.split("/") if path else []
             same_host = urlparse(url).netloc == urlparse(self.base).netloc
-            if same_host and len(parts) == 2 and parts[1] == category_slug:
+            decoded = unquote(path).lower()
+            modern = len(parts) == 2 and parts[1].lower() == category_slug
+            legacy = (len(parts) == 1
+                      and f"_{category_slug}+" in decoded)
+            if same_host and (modern or legacy):
                 links.append(url)
         return list(dict.fromkeys(links))
     def detail(self, url: str) -> dict:
