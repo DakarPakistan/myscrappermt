@@ -51,7 +51,11 @@ def run() -> None:
                             skipped += 1
                             continue
                         record = provider.detail(link)
-                        logger.info("Business scraping: %s", record["name"])
+                        contact_count = sum(len(value) for value in
+                                            record["contacts"].values())
+                        logger.info("Business scraped: %s contacts=%d timings=%d",
+                                    record["name"], contact_count,
+                                    len(record["working_hours"]))
                         save_business(connection, category["id"], record)
                         saved += 1
                     checkpoint_category(connection, category["id"], page + 1)

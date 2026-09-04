@@ -31,7 +31,7 @@ source-specific field mapping. `repository.py` owns persistence only.
    `/<business>_<category>+<locality>/` format.
 6. Listing URLs are batch-checked before detail requests.
 7. Only new or incomplete businesses have detail pages requested.
-8. JSON-LD is preferred; HTML title/meta and links provide fallbacks.
+8. JSON-LD is preferred; visible HTML supplies email and hours fallbacks.
 9. Records and the next-page checkpoint are committed per page.
 10. The category is completed only after all pages finish.
 
@@ -63,8 +63,10 @@ leaves the category pending at its last committed page.
 
 ## Deduplication and provenance
 
-The business identity is `(source, source_id)`. This implementation derives the
-Yellow source ID from the stable listing URL. `ON CONFLICT` updates the listing.
+The business identity is `(source, source_id)`. The Yellow source ID is derived
+from the business slug, so modern and legacy URLs for the same listing resolve
+to one ID. Duplicate URL variants are collapsed before detail requests.
+`ON CONFLICT` updates the listing.
 `business_categories` preserves multiple category memberships. `raw_data` keeps
 the normalized source object for troubleshooting and future mapping.
 
@@ -72,9 +74,9 @@ the normalized source object for troubleshooting and future mapping.
 
 JSON-LD `name`, `description`, `aggregateRating`, `address`, `geo`, `telephone`,
 `email`, `url`, `sameAs`, and `openingHoursSpecification` map to the requested
-business, location, contact, website, rating, and timing tables. Yellow does not
-reliably identify head offices, so the flag remains false unless the source later
-provides an explicit signal.
+tables. When JSON-LD omits them, `mailto:` links, visible email text, and visible
+weekday/hour pairs are parsed from HTML. Yellow does not reliably identify head
+offices, so the flag remains false without an explicit source signal.
 
 ## Adding another source
 

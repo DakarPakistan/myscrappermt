@@ -4,7 +4,7 @@ CONTACT_FIELDS = {
     "phone": "phone", "phones": "phone", "whatsapp": "whatsapp",
     "email": "email", "emails": "email", "facebook": "facebook",
     "instagram": "instagram", "linkedin": "linkedin", "twitter": "twitter",
-    "youtube": "youtube", "social_links": "social",
+    "youtube": "youtube", "social": "social", "social_links": "social",
 }
 
 

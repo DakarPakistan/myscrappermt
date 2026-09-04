@@ -6,6 +6,8 @@ from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+
+from src.yellow_detail_parser import contacts, opening_hours
 class YellowPagesProvider:
     def __init__(self, settings):
         self.base = settings.yellow_url
@@ -42,7 +44,10 @@ class YellowPagesProvider:
         return self.listing_links(self.get(page_url), slug)
 
     def source_id(self, url: str) -> str:
-        return hashlib.sha256(url.encode()).hexdigest()[:40]
+        path = unquote(urlparse(url).path).strip("/")
+        first_segment = path.split("/")[0] if path else url
+        business_slug = first_segment.split("_", 1)[0].lower()
+        return hashlib.sha256(f"yellow:{business_slug}".encode()).hexdigest()[:40]
     def listing_links(self, soup, category_slug: str) -> list[str]:
         links = []
         for anchor in soup.select("a[href]"):
@@ -56,7 +61,10 @@ class YellowPagesProvider:
                       and f"_{category_slug}+" in decoded)
             if same_host and (modern or legacy):
                 links.append(url)
-        return list(dict.fromkeys(links))
+        unique = {}
+        for url in links:
+            unique.setdefault(self.source_id(url), url)
+        return list(unique.values())
     def detail(self, url: str) -> dict:
         soup = self.get(url)
         data = jsonld_business(soup) or {}
@@ -64,7 +72,7 @@ class YellowPagesProvider:
         aggregate = data.get("aggregateRating") or {}
         address = data.get("address") or {}
         return {
-            "source_id": hashlib.sha256(url.encode()).hexdigest()[:40],
+            "source_id": self.source_id(url),
             "name": name,
             "description": data.get("description") or meta(soup, "description"),
             "rating": number(aggregate.get("ratingValue")),
@@ -72,8 +80,8 @@ class YellowPagesProvider:
             "full_address": address_text(address),
             "latitude": number((data.get("geo") or {}).get("latitude")),
             "longitude": number((data.get("geo") or {}).get("longitude")),
-            "contacts": contact_links(soup, data),
-            "working_hours": hours(data),
+            "contacts": contacts(soup, data),
+            "working_hours": opening_hours(soup, data),
             "is_head_office": False,
             "listing_url": url,
         }
@@ -119,25 +127,3 @@ def external_site(url, same_as, base):
         if isinstance(value, str) and not value.startswith(base):
             return value
     return None
-def contact_links(soup, data):
-    values = {"phone": data.get("telephone"), "email": data.get("email")}
-    for anchor in soup.select("a[href]"):
-        href = anchor["href"]
-        if href.startswith("tel:"):
-            values.setdefault("phone", href[4:])
-        elif href.startswith("mailto:"):
-            values.setdefault("email", href[7:].split("?")[0])
-        elif any(site in href.lower() for site in ("facebook.", "instagram.", "linkedin.", "twitter.")):
-            values.setdefault("social", []).append(href)
-    return values
-
-
-def hours(data):
-    output = {}
-    for item in data.get("openingHoursSpecification", []) or []:
-        days = item.get("dayOfWeek", [])
-        days = days if isinstance(days, list) else [days]
-        value = f"{item.get('opens', '')}-{item.get('closes', '')}".strip("-")
-        for day in days:
-            output[str(day).split("/")[-1]] = value
-    return output

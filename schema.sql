@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS businesses (
     id BIGSERIAL PRIMARY KEY,
     category_id BIGINT NOT NULL REFERENCES categories(id),
     source TEXT NOT NULL,
-    source_id TEXT NOT NULL,
+    source_id TEXT NOT NULL, -- canonical provider key, not the full listing URL
     name TEXT NOT NULL,
     description TEXT,
     ratings NUMERIC(3, 2),
