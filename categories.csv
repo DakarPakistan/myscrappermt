@@ -1,0 +1,47 @@
+name,search_query,enabled
+Restaurants,restaurants,false
+Cafes,cafes,false
+Fast food,fast food restaurants,false
+Bars,bars,false
+Pubs,pubs,false
+Pharmacies,pharmacies,false
+Doctors,doctors,false
+Dentists,dentists,false
+Veterinary clinics,veterinary clinics,false
+Banks,banks,false
+Car rental,car rental,false
+Fuel stations,fuel stations,false
+Schools,schools,false
+Kindergartens,kindergartens,false
+Colleges,colleges,false
+Hotels,hotels,false
+Guest houses,guest houses,false
+Hostels,hostels,false
+Supermarkets,supermarkets,false
+Convenience stores,convenience stores,false
+Bakeries,bakeries,false
+Butchers,butchers,false
+Clothing stores,clothing stores,false
+Shoe stores,shoe stores,false
+Jewellery stores,jewellery stores,false
+Beauty salons,beauty salons,false
+Hairdressers,hairdressers,false
+Opticians,opticians,false
+Electronics stores,electronics stores,false
+Mobile phone stores,mobile phone stores,false
+Computer stores,computer stores,false
+Furniture stores,furniture stores,false
+Florists,florists,false
+Gift shops,gift shops,false
+Bookshops,bookshops,false
+Travel agencies,travel agencies,false
+Estate agents,estate agents,false
+Accountants,accountants,false
+Lawyers,lawyers,false
+Insurance offices,insurance agencies,false
+Company offices,company offices,false
+Car repair,car repair shops,false
+Car dealers,car dealers,false
+Gyms,gyms,false
+Plumbers,plumbers,false
+Electricians,electricians,false

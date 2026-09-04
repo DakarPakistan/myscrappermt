@@ -1,0 +1,2 @@
+"""Malta business collector package."""
+
