@@ -30,22 +30,14 @@ class YellowPagesProvider:
                 if name and len(name) < 120:
                     found[path] = name
         return [(name, slug) for slug, name in sorted(found.items())]
-    def fetch(self, query: str) -> list[dict]:
+    def page_links(self, query: str, page: int) -> list[str]:
         slug = slugify(query)
-        records, seen = [], set()
         category_url = f"{self.base}/{slug}/malta/"
-        for page in range(1, self.max_pages + 1):
-            soup = self.get(category_url, {"page": page} if page > 1 else None)
-            links = self.listing_links(soup)
-            fresh = [link for link in links if link not in seen]
-            if not fresh:
-                break
-            for link in fresh:
-                seen.add(link)
-                records.append(self.detail(link))
-            if len(fresh) < 20:
-                break
-        return records
+        soup = self.get(category_url, {"page": page} if page > 1 else None)
+        return self.listing_links(soup)
+
+    def source_id(self, url: str) -> str:
+        return hashlib.sha256(url.encode()).hexdigest()[:40]
     def listing_links(self, soup) -> list[str]:
         links = []
         for anchor in soup.select("a[href]"):
