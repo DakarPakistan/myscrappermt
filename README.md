@@ -1,8 +1,8 @@
 # Malta Yellow Pages Collector
 
 This project collects public business listings from Yellow Pages Malta and saves
-them in PostgreSQL. It uses a review-first workflow: discover categories, approve
-keywords, then collect businesses.
+them in PostgreSQL. Categories are discovered once, reviewed in the database,
+then approved categories drive later business collection.
 
 ## 1. Create database
 
@@ -30,26 +30,21 @@ pip install -r requirements.txt
 These commands create an isolated environment, activate it, and install the
 PostgreSQL, HTTP, HTML parsing, and `.env` libraries.
 
-## 4. Discover and review categories
+## 4. Discover categories once
 
 ```bash
 python category_review.py
 ```
 
-This creates tables, loads candidates from `categories.csv`, optionally reads
-Yellow's `/all-categories/` page, and prints category IDs and keywords. It does
-not fetch business detail pages.
+This creates tables, reads Yellow's `/all-categories/` page, and inserts new
+category candidates with `is_enabled=false`. It does not fetch businesses.
 
-Edit `categories.csv` and set `enabled=true` only for categories you want:
+Review PostgreSQL and enable only the categories you want:
 
-```csv
-name,search_query,enabled
-Restaurants,restaurants,true
-Cafes,cafes,false
+```sql
+UPDATE categories SET is_enabled = TRUE
+WHERE name IN ('Restaurants', 'Cafes');
 ```
-
-Unwanted rows can remain `false` or be removed. New discovered categories are
-disabled automatically and require review.
 
 ## 5. Start scraping
 
@@ -57,10 +52,10 @@ disabled automatically and require review.
 python -m src.main
 ```
 
-The command applies the schema, synchronizes categories, fetches each approved
-category page, follows pagination, opens each business detail page, normalizes
-the fields, and writes PostgreSQL records. It processes one category by default;
-configure `MAX_CATEGORIES_PER_RUN` to change that.
+The command loads enabled, unfinished categories from PostgreSQL into memory,
+fetches each category page, batch-checks existing businesses, opens only missing
+detail pages, and writes PostgreSQL records. `MAX_CATEGORIES_PER_RUN=0` loads
+all pending categories.
 
 Stop locally with `Ctrl+C`. Failed categories remain pending and can be retried
 by running the command again. Completed categories and duplicate source IDs are
@@ -98,11 +93,10 @@ stack traces. Never print `.env` or API/database credentials.
 ## 9. GitHub Actions
 
 Add `DATABASE_URL` as an Actions secret. Optional Actions variables are
-`YELLOW_BASE_URL`, `MAX_CATEGORIES_PER_RUN`, and `DISCOVER_YELLOW_CATEGORIES`.
-The workflow first discovers categories, then scrapes only categories whose
-`enabled` value is `true` in the committed `categories.csv`. Run the workflow
-manually first; its schedule runs every six hours. Failed jobs retain logs for
-debugging. Review Yellow's terms and robots guidance before automated collection.
+`YELLOW_BASE_URL` and `MAX_CATEGORIES_PER_RUN`. The workflow only scrapes
+database categories with `is_enabled=true` and `is_completed=false`; it does not
+discover categories. Run category discovery once, review the database, then run
+the workflow manually. Its schedule runs every six hours.
 
 See `TECHNICAL_GUIDE.md` for module responsibilities, field mapping, and provider
 replacement details.

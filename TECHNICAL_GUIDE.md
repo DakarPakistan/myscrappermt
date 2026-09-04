@@ -22,15 +22,15 @@ source-specific field mapping. `repository.py` owns persistence only.
 
 ## Execution sequence
 
-1. Category review creates the schema and synchronizes `categories.csv`.
-2. Yellow's all-categories page can add new disabled candidates.
-3. The user sets selected CSV rows to `enabled=true`.
-4. The runner selects enabled and unfinished categories.
+1. Category review creates the schema and imports Yellow category candidates.
+2. The user reviews PostgreSQL and sets selected rows to `is_enabled=true`.
+3. The runner loads enabled and unfinished categories into memory.
 5. The provider requests `/<category>/malta/` and its page parameters.
-6. Listing links are collected and each detail page is requested.
-7. JSON-LD is preferred; HTML title/meta and links provide fallbacks.
-8. Normalized records are sent to the repository.
-9. The category is completed only after all records commit successfully.
+6. Listing URLs are batch-checked before detail requests.
+7. Only new or incomplete businesses have detail pages requested.
+8. JSON-LD is preferred; HTML title/meta and links provide fallbacks.
+9. Records and the next-page checkpoint are committed per page.
+10. The category is completed only after all pages finish.
 
 ## Normalized provider record
 
@@ -48,11 +48,12 @@ User-Agent, timeout, and configurable delay. It does not use CAPTCHA bypasses,
 proxy rotation, or browser stealth techniques. Respect Yellow's terms, robots
 rules, rate limits, and any permission requirement.
 
-## Transactions and retries
+## Transactions, cache, and retries
 
-Each category is one PostgreSQL transaction. Any HTTP, parsing, or SQL exception
-causes rollback, logs a stack trace, and leaves the category pending. GitHub gets
-a failed job status, so the next scheduled run can retry it.
+The selected category batch is held in memory. Each listing page uses one batch
+database lookup for completed businesses, then commits records and the next-page
+checkpoint. Any exception rolls back the current page, logs a stack trace, and
+leaves the category pending at its last committed page.
 
 ## Deduplication and provenance
 
@@ -71,7 +72,7 @@ provides an explicit signal.
 
 ## Adding another source
 
-Create `src/<source>_provider.py` with `fetch(query) -> list[dict]`, add its settings
+Create `src/<source>_provider.py` with `page_links(query, page)` and `detail(url)`, add its settings
 to `config.py` and `.env.example`, and select it in `main.py`. Do not change the
 repository or deduplication rules unless the new source has a different identity.
 

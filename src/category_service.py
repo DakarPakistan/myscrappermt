@@ -1,25 +1,3 @@
-import csv
-from pathlib import Path
-
-
-def seed_categories(connection, path: str = "categories.csv") -> int:
-    rows = list(csv.DictReader(Path(path).open(encoding="utf-8")))
-    for row in rows:
-        row["enabled"] = row.get("enabled", "false").lower() in {"1", "true", "yes"}
-    with connection.cursor() as cursor:
-        cursor.executemany(
-            """
-            INSERT INTO categories (name, search_query, is_enabled)
-            VALUES (%(name)s, %(search_query)s, %(enabled)s)
-            ON CONFLICT (name) DO UPDATE SET
-              search_query = EXCLUDED.search_query,
-              is_enabled = EXCLUDED.is_enabled
-            """,
-            rows,
-        )
-    return len(rows)
-
-
 def pending_categories(connection, limit: int):
     with connection.cursor() as cursor:
         query = """SELECT id, name, search_query, next_page

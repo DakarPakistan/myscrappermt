@@ -1,12 +1,12 @@
 import logging
 
 from src.category_service import (
-    checkpoint_category, complete_category, pending_categories, seed_categories,
+    checkpoint_category, complete_category, pending_categories,
 )
 from src.config import load_settings
 from src.database import apply_schema, connect
 from src.yellow_pages_provider import YellowPagesProvider
-from src.progress import detail_completed
+from src.progress import completed_businesses
 from src.repository import attach_category, save_business
 
 
@@ -21,30 +21,34 @@ def run() -> None:
     provider = YellowPagesProvider(settings)
     failures = []
     with connect(settings.database_url) as connection:
-        count = seed_categories(connection)
-        connection.commit()
-        logger.info("Synchronized %d categories", count)
         categories = pending_categories(connection, settings.max_categories)
+        logger.info("Loaded categories from database: %d", len(categories))
         for category in categories:
-            logger.info("Starting category %s", category["name"])
+            logger.info("Starting category: %s", category["name"])
             try:
                 page = category["next_page"]
                 while page <= settings.max_pages:
+                    logger.info("Searching businesses: category=%s page=%d",
+                                category["name"], page)
                     links = provider.page_links(category["search_query"], page)
                     if not links:
                         complete_category(connection, category["id"])
                         connection.commit()
                         break
+                    existing = completed_businesses(
+                        connection, [provider.source_id(link) for link in links]
+                    )
                     saved = skipped = 0
                     for link in links:
-                        existing_id = detail_completed(
-                            connection, provider.source_id(link)
-                        )
+                        source_id = provider.source_id(link)
+                        existing_id = existing.get(source_id)
                         if existing_id:
                             attach_category(connection, existing_id, category["id"])
                             skipped += 1
                             continue
-                        save_business(connection, category["id"], provider.detail(link))
+                        record = provider.detail(link)
+                        logger.info("Business scraping: %s", record["name"])
+                        save_business(connection, category["id"], record)
                         saved += 1
                     checkpoint_category(connection, category["id"], page + 1)
                     connection.commit()

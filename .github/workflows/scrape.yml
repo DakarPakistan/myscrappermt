@@ -23,20 +23,11 @@ jobs:
         run: pip install -r requirements.txt
       - name: Check Python files
         run: python -m compileall -q src
-      - name: Discover Yellow categories
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
-          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'false' }}
-          PYTHONUNBUFFERED: "1"
-          LOG_LEVEL: DEBUG
-        run: python category_review.py
       - name: Collect businesses
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
           MAX_CATEGORIES_PER_RUN: ${{ vars.MAX_CATEGORIES_PER_RUN || '0' }}
-          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'false' }}
           PYTHONUNBUFFERED: "1"
           LOG_LEVEL: DEBUG
         run: python -m src.main
