@@ -25,7 +25,9 @@ source-specific field mapping. `repository.py` owns persistence only.
 1. Category review creates the schema and imports Yellow category candidates.
 2. The user reviews PostgreSQL and sets selected rows to `is_enabled=true`.
 3. The runner loads enabled and unfinished categories into memory.
-5. The provider requests `/<category>/malta/` and its page parameters.
+4. The provider requests `/<category>/malta/`; later pages use
+   `/<category>/malta/pageno=<page>`.
+5. Only links matching `/<business>/<category>/` are treated as businesses.
 6. Listing URLs are batch-checked before detail requests.
 7. Only new or incomplete businesses have detail pages requested.
 8. JSON-LD is preferred; HTML title/meta and links provide fallbacks.
@@ -47,6 +49,9 @@ expected page size, or `MAX_PAGES_PER_CATEGORY` is reached. Requests use a clear
 User-Agent, timeout, and configurable delay. It does not use CAPTCHA bypasses,
 proxy rotation, or browser stealth techniques. Respect Yellow's terms, robots
 rules, rate limits, and any permission requirement.
+
+Security-verification HTML raises an error so the page remains pending for a
+later retry; the collector does not attempt to bypass the verification.
 
 ## Transactions, cache, and retries
 

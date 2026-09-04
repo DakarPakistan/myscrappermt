@@ -18,6 +18,12 @@ class YellowPagesProvider:
         response = self.session.get(url, params=params, timeout=self.timeout)
         response.raise_for_status()
         time.sleep(self.delay)
+        body = response.text.lower()
+        verification = ("performing security verification",
+                        "verify you are human", "verifies you are not a bot",
+                        "cf-chl-")
+        if any(marker in body for marker in verification):
+            raise RuntimeError(f"Yellow security verification encountered: {url}")
         return BeautifulSoup(response.text, "html.parser")
     def discover_categories(self) -> list[tuple[str, str]]:
         soup = self.get(f"{self.base}/all-categories/")
@@ -33,18 +39,19 @@ class YellowPagesProvider:
     def page_links(self, query: str, page: int) -> list[str]:
         slug = slugify(query)
         category_url = f"{self.base}/{slug}/malta/"
-        soup = self.get(category_url, {"page": page} if page > 1 else None)
-        return self.listing_links(soup)
+        page_url = category_url if page == 1 else f"{category_url}pageno={page}"
+        return self.listing_links(self.get(page_url), slug)
 
     def source_id(self, url: str) -> str:
         return hashlib.sha256(url.encode()).hexdigest()[:40]
-    def listing_links(self, soup) -> list[str]:
+    def listing_links(self, soup, category_slug: str) -> list[str]:
         links = []
         for anchor in soup.select("a[href]"):
             url = urljoin(self.base, anchor["href"]).split("?")[0]
             path = urlparse(url).path.strip("/")
-            if (url.startswith(self.base) and path and path.count("/") == 1
-                    and path not in {"all-categories", "popular-categories"}):
+            parts = path.split("/") if path else []
+            same_host = urlparse(url).netloc == urlparse(self.base).netloc
+            if same_host and len(parts) == 2 and parts[1] == category_slug:
                 links.append(url)
         return list(dict.fromkeys(links))
     def detail(self, url: str) -> dict:
