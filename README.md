@@ -97,8 +97,10 @@ stack traces. Never print `.env` or API/database credentials.
 
 ## 9. GitHub Actions
 
-Add `DATABASE_URL` as an Actions secret. Optional variables are
-`MAX_CATEGORIES_PER_RUN` and `DISCOVER_YELLOW_CATEGORIES`. Run the workflow
+Add `DATABASE_URL` as an Actions secret. Optional Actions variables are
+`YELLOW_BASE_URL`, `MAX_CATEGORIES_PER_RUN`, and `DISCOVER_YELLOW_CATEGORIES`.
+The workflow first discovers categories, then scrapes only categories whose
+`enabled` value is `true` in the committed `categories.csv`. Run the workflow
 manually first; its schedule runs every six hours. Failed jobs retain logs for
 debugging. Review Yellow's terms and robots guidance before automated collection.
 
