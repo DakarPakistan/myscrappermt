@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS categories (
     UNIQUE (search_query)
 );
 
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS next_page INTEGER NOT NULL DEFAULT 1;
+
 CREATE TABLE IF NOT EXISTS businesses (
     id BIGSERIAL PRIMARY KEY,
     category_id BIGINT NOT NULL REFERENCES categories(id),

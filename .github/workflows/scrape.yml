@@ -12,7 +12,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,7 +27,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
-          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'true' }}
+          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'false' }}
           PYTHONUNBUFFERED: "1"
           LOG_LEVEL: DEBUG
         run: python category_review.py
@@ -36,7 +36,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
           MAX_CATEGORIES_PER_RUN: ${{ vars.MAX_CATEGORIES_PER_RUN || '1' }}
-          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'true' }}
+          DISCOVER_YELLOW_CATEGORIES: ${{ vars.DISCOVER_YELLOW_CATEGORIES || 'false' }}
           PYTHONUNBUFFERED: "1"
           LOG_LEVEL: DEBUG
         run: python -m src.main

@@ -43,6 +43,14 @@ def save_business(connection, category_id: int, element: dict) -> int:
         return business_id
 
 
+def attach_category(connection, business_id: int, category_id: int) -> None:
+    connection.execute(
+        """INSERT INTO business_categories (business_id, category_id)
+        VALUES (%s, %s) ON CONFLICT DO NOTHING""",
+        (business_id, category_id),
+    )
+
+
 def save_location(cursor, business_id: int, element: dict) -> None:
     cursor.execute(
         """

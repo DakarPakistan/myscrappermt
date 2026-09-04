@@ -22,14 +22,14 @@ def seed_categories(connection, path: str = "categories.csv") -> int:
 
 def pending_categories(connection, limit: int):
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id, name, search_query
-            FROM categories WHERE is_enabled = TRUE AND is_completed = FALSE
-            ORDER BY id LIMIT %s
-            """,
-            (limit,),
-        )
+        query = """SELECT id, name, search_query, next_page
+        FROM categories WHERE is_enabled = TRUE AND is_completed = FALSE
+        ORDER BY id"""
+        if limit > 0:
+            query += " LIMIT %s"
+            cursor.execute(query, (limit,))
+        else:
+            cursor.execute(query)
         return cursor.fetchall()
 
 
@@ -40,6 +40,13 @@ def complete_category(connection, category_id: int) -> None:
         WHERE id = %s
         """,
         (category_id,),
+    )
+
+
+def checkpoint_category(connection, category_id: int, next_page: int) -> None:
+    connection.execute(
+        "UPDATE categories SET next_page=%s WHERE id=%s",
+        (next_page, category_id),
     )
 
 

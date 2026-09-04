@@ -27,8 +27,8 @@ def load_settings() -> Settings:
         http_timeout=int(os.getenv("HTTP_TIMEOUT_SECONDS", "60")),
         request_delay=float(os.getenv("REQUEST_DELAY_SECONDS", "2")),
         max_pages=int(os.getenv("MAX_PAGES_PER_CATEGORY", "100")),
-        max_categories=int(os.getenv("MAX_CATEGORIES_PER_RUN", "1")),
-        discover_categories=os.getenv("DISCOVER_YELLOW_CATEGORIES", "true").lower()
+        max_categories=int(os.getenv("MAX_CATEGORIES_PER_RUN", "0")),
+        discover_categories=os.getenv("DISCOVER_YELLOW_CATEGORIES", "false").lower()
         in {"1", "true", "yes"},
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
