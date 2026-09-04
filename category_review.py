@@ -19,11 +19,12 @@ def main() -> None:
         total = seed_categories(connection)
         if settings.discover_categories:
             candidates = YellowPagesProvider(settings).discover_categories()
-            connection.executemany(
-                """INSERT INTO categories (name, search_query, is_enabled)
-                VALUES (%s, %s, FALSE) ON CONFLICT DO NOTHING""",
-                [(name, slug) for name, slug in candidates],
-            )
+            with connection.cursor() as cursor:
+                cursor.executemany(
+                    """INSERT INTO categories (name, search_query, is_enabled)
+                    VALUES (%s, %s, FALSE) ON CONFLICT DO NOTHING""",
+                    [(name, slug) for name, slug in candidates],
+                )
             total += len(candidates)
         connection.commit()
         rows = connection.execute(
