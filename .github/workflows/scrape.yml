@@ -28,6 +28,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
           MAX_CATEGORIES_PER_RUN: ${{ vars.MAX_CATEGORIES_PER_RUN || '0' }}
+          MAX_PAGES_PER_CATEGORY: ${{ vars.MAX_PAGES_PER_CATEGORY || '100' }}
+          HTTP_TIMEOUT_SECONDS: ${{ vars.HTTP_TIMEOUT_SECONDS || '60' }}
+          REQUEST_DELAY_SECONDS: ${{ vars.REQUEST_DELAY_SECONDS || '2' }}
           PYTHONUNBUFFERED: "1"
           LOG_LEVEL: DEBUG
         run: python -m src.main

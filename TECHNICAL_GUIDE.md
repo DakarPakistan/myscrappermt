@@ -46,10 +46,13 @@ It may use any source-specific ID internally, but must provide a stable
 ## Pagination and safety
 
 The provider follows pages until there are no new detail links, fewer than the
-expected page size, or `MAX_PAGES_PER_CATEGORY` is reached. Requests use a clear
-User-Agent, timeout, and configurable delay. It does not use CAPTCHA bypasses,
-proxy rotation, or browser stealth techniques. Respect Yellow's terms, robots
-rules, rate limits, and any permission requirement.
+expected page size, or a page repeats. `MAX_PAGES_PER_CATEGORY` is a safety cap;
+reaching it leaves the category unfinished and fails the job visibly. Requests
+use a timeout, delay, and bounded retries for transient HTTP errors. It does not
+use CAPTCHA bypasses, proxy rotation, or browser stealth techniques.
+
+GitHub variables `MAX_PAGES_PER_CATEGORY`, `HTTP_TIMEOUT_SECONDS`, and
+`REQUEST_DELAY_SECONDS` override the workflow defaults without code changes.
 
 Security-verification HTML raises an error so the page remains pending for a
 later retry; the collector does not attempt to bypass the verification.
@@ -57,9 +60,10 @@ later retry; the collector does not attempt to bypass the verification.
 ## Transactions, cache, and retries
 
 The selected category batch is held in memory. Each listing page uses one batch
-database lookup for completed businesses, then commits records and the next-page
-checkpoint. Any exception rolls back the current page, logs a stack trace, and
-leaves the category pending at its last committed page.
+database lookup for completed businesses. Each business is then committed using
+the same connection, so a restart skips completed details. The page checkpoint
+advances only after every link succeeds. Failures retain their exception type and
+message in the final workflow error.
 
 ## Deduplication and provenance
 

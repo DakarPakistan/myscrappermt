@@ -6,6 +6,8 @@ from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from src.yellow_detail_parser import contacts, opening_hours
 class YellowPagesProvider:
@@ -15,6 +17,10 @@ class YellowPagesProvider:
         self.delay = settings.request_delay
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "malta-business-directory/1.0"})
+        retries = Retry(total=3, backoff_factor=2,
+                        status_forcelist=(429, 500, 502, 503, 504),
+                        allowed_methods=("GET",))
+        self.session.mount("https://", HTTPAdapter(max_retries=retries))
     def get(self, url, params=None):
         response = self.session.get(url, params=params, timeout=self.timeout)
         response.raise_for_status()

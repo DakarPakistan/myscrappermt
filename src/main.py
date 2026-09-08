@@ -27,6 +27,7 @@ def run() -> None:
             logger.info("Starting category: %s", category["name"])
             try:
                 page = category["next_page"]
+                page_signatures = set()
                 while page <= settings.max_pages:
                     logger.info("Searching businesses: category=%s page=%d",
                                 category["name"], page)
@@ -39,15 +40,27 @@ def run() -> None:
                         complete_category(connection, category["id"])
                         connection.commit()
                         break
+                    source_ids = tuple(sorted(
+                        provider.source_id(link) for link in links
+                    ))
+                    if source_ids in page_signatures:
+                        logger.info("Repeated result page; completing category: %s",
+                                    category["name"])
+                        complete_category(connection, category["id"])
+                        connection.commit()
+                        break
+                    page_signatures.add(source_ids)
                     existing = completed_businesses(
-                        connection, [provider.source_id(link) for link in links]
+                        connection, list(source_ids)
                     )
+                    connection.commit()
                     saved = skipped = 0
                     for link in links:
                         source_id = provider.source_id(link)
                         existing_id = existing.get(source_id)
                         if existing_id:
                             attach_category(connection, existing_id, category["id"])
+                            connection.commit()
                             skipped += 1
                             continue
                         record = provider.detail(link)
@@ -57,6 +70,7 @@ def run() -> None:
                                     record["name"], contact_count,
                                     len(record["working_hours"]))
                         save_business(connection, category["id"], record)
+                        connection.commit()
                         saved += 1
                     checkpoint_category(connection, category["id"], page + 1)
                     connection.commit()
@@ -68,16 +82,19 @@ def run() -> None:
                         connection.commit()
                         break
                 else:
-                    logger.warning("Category %s reached MAX_PAGES at page %d",
-                                   category["name"], page)
-            except Exception:
+                    reason = (f"{category['name']}: reached MAX_PAGES "
+                              f"at page {page}")
+                    failures.append(reason)
+                    logger.error(reason)
+            except Exception as error:
                 connection.rollback()
-                failures.append(category["name"])
+                reason = f"{category['name']}: {type(error).__name__}: {error}"
+                failures.append(reason)
                 logger.exception(
                     "Category %s failed and remains pending", category["name"]
                 )
     if failures:
-        raise RuntimeError(f"Failed categories: {', '.join(failures)}")
+        raise RuntimeError("Failed categories: " + "; ".join(failures))
 
 
 if __name__ == "__main__":
