@@ -64,6 +64,10 @@ def run() -> None:
                             skipped += 1
                             continue
                         record = provider.detail(link)
+                        if record is None:
+                            logger.warning("Skipping missing listing: %s", link)
+                            skipped += 1
+                            continue
                         contact_count = sum(len(value) for value in
                                             record["contacts"].values())
                         logger.info("Business scraped: %s contacts=%d timings=%d",
@@ -82,10 +86,14 @@ def run() -> None:
                         connection.commit()
                         break
                 else:
-                    reason = (f"{category['name']}: reached MAX_PAGES "
-                              f"at page {page}")
-                    failures.append(reason)
-                    logger.error(reason)
+                    # The configured page limit is a safety boundary, not a
+                    # scraper failure. Mark the category complete so a later
+                    # run does not repeatedly start at page MAX_PAGES + 1.
+                    complete_category(connection, category["id"])
+                    connection.commit()
+                    logger.warning("Category %s reached MAX_PAGES at page %d; "
+                                   "marking it complete",
+                                   category["name"], page)
             except Exception as error:
                 connection.rollback()
                 reason = f"{category['name']}: {type(error).__name__}: {error}"

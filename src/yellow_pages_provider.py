@@ -71,8 +71,15 @@ class YellowPagesProvider:
         for url in links:
             unique.setdefault(self.source_id(url), url)
         return list(unique.values())
-    def detail(self, url: str) -> dict:
-        soup = self.get(url)
+    def detail(self, url: str) -> dict | None:
+        try:
+            soup = self.get(url)
+        except requests.HTTPError as error:
+            # Directory listings can contain stale links. A deleted listing
+            # must not make the whole category fail.
+            if error.response is not None and error.response.status_code == 404:
+                return None
+            raise
         data = jsonld_business(soup) or {}
         name = data.get("name") or text(soup, ["h1", "title"]) or "Unnamed business"
         aggregate = data.get("aggregateRating") or {}
