@@ -21,10 +21,24 @@ def run() -> None:
     provider = YellowPagesProvider(settings)
     failures = []
     with connect(settings.database_url) as connection:
-        categories = pending_categories(connection, settings.max_categories)
-        logger.info("Loaded categories from database: %d", len(categories))
+        categories = pending_categories(
+            connection,
+            settings.max_categories,
+            settings.category_start_id,
+            settings.category_end_id,
+        )
+        logger.info(
+            "Loaded categories from database: count=%d start_id=%s end_id=%s",
+            len(categories),
+            settings.category_start_id or "unbounded",
+            settings.category_end_id or "unbounded",
+        )
         for category in categories:
-            logger.info("Starting category: %s", category["name"])
+            logger.info(
+                "Starting category: id=%s name=%s",
+                category["id"],
+                category["name"],
+            )
             try:
                 page = category["next_page"]
                 page_signatures = set()

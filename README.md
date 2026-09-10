@@ -55,7 +55,8 @@ python -m src.main
 The command loads enabled, unfinished categories from PostgreSQL into memory,
 fetches each category page, batch-checks existing businesses, opens only missing
 detail pages, and writes PostgreSQL records. `MAX_CATEGORIES_PER_RUN=0` loads
-all pending categories.
+all pending categories. `CATEGORY_START_ID` and `CATEGORY_END_ID` restrict the
+runner to an inclusive category ID range; `0` means that side is unbounded.
 
 Stop locally with `Ctrl+C`. Failed categories remain pending and can be retried
 by running the command again. Completed categories and duplicate source IDs are
@@ -92,11 +93,13 @@ stack traces. Never print `.env` or API/database credentials.
 
 ## 9. GitHub Actions
 
-Add `DATABASE_URL` as an Actions secret. Optional Actions variables are
-`YELLOW_BASE_URL` and `MAX_CATEGORIES_PER_RUN`. The workflow only scrapes
+Add `DATABASE_URL` as an Actions secret. Optional Actions variables include
+`YELLOW_BASE_URL`, `MAX_CATEGORIES_PER_RUN`, `CATEGORY_START_ID`, and
+`CATEGORY_END_ID`. The workflow only scrapes
 database categories with `is_enabled=true` and `is_completed=false`; it does not
 discover categories. Run category discovery once, review the database, then run
-the workflow manually. Its schedule runs every six hours.
+the workflow manually. Its schedule runs every six hours. Manual runs can also
+override the start and end IDs in the **Run workflow** form.
 
 See `TECHNICAL_GUIDE.md` for module responsibilities, field mapping, and provider
 replacement details.

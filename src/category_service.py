@@ -1,13 +1,21 @@
-def pending_categories(connection, limit: int):
+def pending_categories(
+    connection, limit: int, start_id: int = 0, end_id: int = 0
+):
     with connection.cursor() as cursor:
         query = """SELECT id, name, search_query, next_page
-        FROM categories WHERE is_enabled = TRUE AND is_completed = FALSE
-        ORDER BY id"""
+        FROM categories WHERE is_enabled = TRUE AND is_completed = FALSE"""
+        parameters = []
+        if start_id > 0:
+            query += " AND id >= %s"
+            parameters.append(start_id)
+        if end_id > 0:
+            query += " AND id <= %s"
+            parameters.append(end_id)
+        query += " ORDER BY id"
         if limit > 0:
             query += " LIMIT %s"
-            cursor.execute(query, (limit,))
-        else:
-            cursor.execute(query)
+            parameters.append(limit)
+        cursor.execute(query, tuple(parameters))
         return cursor.fetchall()
 
 

@@ -24,7 +24,8 @@ source-specific field mapping. `repository.py` owns persistence only.
 
 1. Category review creates the schema and imports Yellow category candidates.
 2. The user reviews PostgreSQL and sets selected rows to `is_enabled=true`.
-3. The runner loads enabled and unfinished categories into memory.
+3. The runner loads enabled and unfinished categories inside its configured,
+   inclusive category ID range into memory.
 4. The provider requests `/<category>/malta/`; later pages use
    `/<category>/malta/pageno=<page>`.
 5. Business links match `/<business>/<category>/` or Yellow's legacy
@@ -56,6 +57,35 @@ GitHub variables `MAX_PAGES_PER_CATEGORY`, `HTTP_TIMEOUT_SECONDS`, and
 
 Security-verification HTML raises an error so the page remains pending for a
 later retry; the collector does not attempt to bypass the verification.
+
+## Distributing category ranges
+
+`CATEGORY_START_ID` and `CATEGORY_END_ID` limit a runner by the PostgreSQL
+`categories.id` value. Both endpoints are inclusive. A value of `0` disables
+that boundary, so the default range `0` to `0` processes every pending category.
+The filters are applied before `MAX_CATEGORIES_PER_RUN`.
+
+Give every GitHub fork/account a non-overlapping range, for example:
+
+| Runner | `CATEGORY_START_ID` | `CATEGORY_END_ID` |
+| --- | ---: | ---: |
+| Account 1 | 1 | 100 |
+| Account 2 | 101 | 200 |
+| Account 3 | 201 | 300 |
+
+All runners may use the same `DATABASE_URL`. In each fork, add the two values as
+repository **Actions variables** under **Settings > Secrets and variables >
+Actions > Variables**. Scheduled runs use those repository variables. A manual
+run can override both values in the **Run workflow** form. Keep the ranges
+non-overlapping; completion and page checkpoints are shared in PostgreSQL.
+
+To see the category IDs before assigning ranges, run:
+
+```sql
+SELECT id, name, is_enabled, is_completed
+FROM categories
+ORDER BY id;
+```
 
 ## Transactions, cache, and retries
 

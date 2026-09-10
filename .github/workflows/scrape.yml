@@ -2,6 +2,17 @@ name: Collect Malta businesses
 
 on:
   workflow_dispatch:
+    inputs:
+      category_start_id:
+        description: "First category ID to scrape (inclusive; 0 means no lower bound)"
+        required: false
+        default: "0"
+        type: number
+      category_end_id:
+        description: "Last category ID to scrape (inclusive; 0 means no upper bound)"
+        required: false
+        default: "0"
+        type: number
   schedule:
     - cron: "17 */6 * * *"
 
@@ -28,6 +39,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           YELLOW_BASE_URL: ${{ vars.YELLOW_BASE_URL || 'https://www.yellow.com.mt' }}
           MAX_CATEGORIES_PER_RUN: ${{ vars.MAX_CATEGORIES_PER_RUN || '0' }}
+          CATEGORY_START_ID: ${{ inputs.category_start_id || vars.CATEGORY_START_ID || '0' }}
+          CATEGORY_END_ID: ${{ inputs.category_end_id || vars.CATEGORY_END_ID || '0' }}
           MAX_PAGES_PER_CATEGORY: ${{ vars.MAX_PAGES_PER_CATEGORY || '100' }}
           HTTP_TIMEOUT_SECONDS: ${{ vars.HTTP_TIMEOUT_SECONDS || '60' }}
           REQUEST_DELAY_SECONDS: ${{ vars.REQUEST_DELAY_SECONDS || '2' }}
