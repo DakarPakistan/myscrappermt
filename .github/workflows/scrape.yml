@@ -25,8 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -34,6 +34,14 @@ jobs:
         run: pip install -r requirements.txt
       - name: Check Python files
         run: python -m compileall -q src
+      - name: Check database secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL secret is not set. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
       - name: Collect businesses
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
