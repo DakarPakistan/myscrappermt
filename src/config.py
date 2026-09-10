@@ -20,7 +20,7 @@ class Settings:
 
 def load_settings() -> Settings:
     load_dotenv()
-    database_url = os.getenv("DATABASE_URL")
+    database_url = os.getenv("DATABASE_URL", "").strip().strip("\"'")
     if not database_url:
         raise RuntimeError("DATABASE_URL is required")
     category_start_id = int(os.getenv("CATEGORY_START_ID", "0"))

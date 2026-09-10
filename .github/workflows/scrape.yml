@@ -38,10 +38,21 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          if [ -z "$DATABASE_URL" ]; then
-            echo "::error::DATABASE_URL secret is not set. Add it under Settings > Secrets and variables > Actions."
-            exit 1
-          fi
+          python - <<'PY'
+          import os, sys
+          from urllib.parse import urlsplit
+          url = os.environ.get("DATABASE_URL", "").strip().strip("\"'")
+          if not url:
+              sys.exit("::error::DATABASE_URL secret is not set. Add it under Settings > Secrets and variables > Actions.")
+          parts = urlsplit(url)
+          try:
+              port = parts.port
+          except ValueError:
+              port = None
+          print(f"scheme={parts.scheme} host={parts.hostname} port={port}")
+          if parts.scheme not in ("postgres", "postgresql") or not parts.hostname or not port:
+              sys.exit("::error::DATABASE_URL must look like postgres://user:password@host:PORT/dbname?sslmode=require (paste only the URL, no DATABASE_URL= prefix, with a numeric port).")
+          PY
       - name: Collect businesses
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
